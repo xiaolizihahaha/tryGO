@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"log"
 	db "test1/database"
 )
@@ -75,4 +76,80 @@ func (u *User) Select(id int64) User {
 	}
 	return *u
 
+}
+
+func (u *User) SelectOne(id int64) User {
+	rows, err := db.SqlDB.Query("select * from user_test where id=?", id)
+
+	if err == nil {
+		var u User
+		for rows.Next() {
+			err := rows.Scan(&u.User_id, &u.User_name, &u.User_password)
+			if err == nil {
+				return u
+			}
+			fmt.Println(err)
+
+		}
+	}
+	fmt.Println(err)
+	return User{User_id: 0, User_name: "none", User_password: "none"}
+}
+
+func SelectAll() []User {
+
+	//先查询user表数据总数
+	total := 0
+	totals, err := db.SqlDB.Query("select count(*) from user_test")
+
+	for totals.Next() {
+		err := totals.Scan(&total)
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	Users := make([]User, 0, total)
+	rows, err := db.SqlDB.Query("select * from user_test limit ?", total)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	for rows.Next() {
+		var u User
+		err := rows.Scan(&u.User_id, &u.User_name, &u.User_password)
+		if err != nil {
+			fmt.Println(err)
+		}
+		Users = append(Users, u)
+
+	}
+	return Users
+}
+
+func SaveUsers(users []User) bool {
+	fmt.Println(users)
+
+	tx, _ := db.SqlDB.Begin()
+
+	saveSign := true
+
+	for _, u := range users {
+		_, err := db.SqlDB.Exec("INSERT INTO user_test(username,password) VALUE(?,?)", u.User_name, u.User_password)
+
+		if err != nil {
+			saveSign = false
+			fmt.Println(err)
+		}
+
+	}
+
+	if saveSign == true {
+		tx.Rollback()
+		return saveSign
+	}
+
+	tx.Commit()
+	return saveSign
 }

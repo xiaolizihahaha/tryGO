@@ -1,6 +1,7 @@
 package api1
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -10,6 +11,9 @@ import (
 func Add(c *gin.Context) {
 	a := c.Query("a")
 	b := c.Query("b")
+
+	fmt.Println("a=", a)
+	fmt.Println("b=", b)
 
 	a_value, a_err := strconv.Atoi(a)
 	b_value, b_err := strconv.Atoi(b)
